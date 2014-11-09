@@ -1,0 +1,96 @@
+<h1>Pumpkin</h1>
+<form>
+  <div>
+    <ol reversed="">
+      <li ng-repeat="item in main.rpn track by $index" class="item" ng-class="item-{{item | typeof}}" ng-click="main.input = item">
+        <span ng-bind="item | pprint"></span>
+        <span class="pull-right" ng-bind="item | typeof"></span>
+      </li>
+    </ol>
+  </div>
+  <div class="input-group">
+    <span class="input-group-addon">{{main.rpn.depth}}</span>
+    <input type="text" class="form-control" ng-model="main.input" ng-keyup="main.keyup($event)" ng-keypress="main.keypress($event)" />
+    <div class="input-group-btn">
+      <button class="btn btn-default" ng-click="main.submit(main.input); main.input = '';">
+        <i class="glyphicon glyphicon-open"></i>
+      </button>
+      <button type="button" class="btn btn-default dropdown-toggle" ng-click="main.star(main.input); main.input = ''; main.state = 3;">
+        <i class="glyphicon glyphicon-paperclip"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="panel-container">
+
+    <div id="mocha" class="inputpanel animate-show" ng-show="main.state == 2"></div>
+    <div id="kbd" class="inputpanel animate-show" ng-show="main.state == 1">
+      <button class="btn btn-default" ng-click="main.submit(key)" ng-repeat="(key,value) in main.rpn.dict" ng-attr-title="{{value | pprint}}">{{key}}</button>
+    </div>
+    <div id="fav" class="inputpanel animate-show" ng-show="main.state == 3">
+      <div class="btn-toolbar" role="toolbar">
+
+        <div class="btn-float-group" ng-repeat="value in main.starred track by $index">
+          <button class="btn btn-default" ng-click="main.submit(value)" ng-attr-title="{{value | pprint}}">{{value}}</button>
+          <div class="btn-group btn-float btn-group-xxs">
+            <button class="btn btn-default" ng-click="main.unstar($index)" title="delete"><i class="glyphicon glyphicon-remove"></i></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div id="help" class="inputpanel animate-show" ng-show="main.state == 4">
+
+      <p>Core words have multiple meanings depending on data types type:
+        <ul class="list-unstyled">
+          <li /><kbd ng-click="main.submit('+')">+</kbd> Atritmatic sum, boolean OR, string/list concatination.
+          <li /><kbd ng-click="main.submit('-')">-</kbd> Atritmatic subtraction, boolean XOR.
+          <li /><kbd ng-click="main.submit('*')">*</kbd> Atritmatic multiplication, boolean AND, list join, string/list repeating.
+          <li /><kbd ng-click="main.submit('/')">/</kbd> Atritmatic division, boolean NAND, string split.
+        </ul>
+      </p>
+      <p />Manipulating the stack:
+        <ul class="list-inline" >
+          <li ng-repeat="key in ['swap','dup','drop']">
+            <kbd ng-click="main.submit(key)">{{::key}}</kbd>
+          </li>
+        </ul>
+      <p />Comparing values:
+        <ul class="list-inline" >
+          <li ng-repeat="key in ['=','>','<']"><kbd ng-click="main.submit(key)">{{::key}}</kbd></li>
+        </ul>
+      <p />List operations:
+        <ul class="list-inline" >
+          <li ng-repeat="key in ['>>','<<']">
+            <kbd ng-click="main.submit(key)">{{::key}}</kbd>
+          </li>
+        </ul>
+      <p />Definition operations:
+        <ul class="list-inline" >
+          <li ng-repeat="key in ['def','sto','rcl','see','delete']">
+            <kbd ng-click="main.submit(key)">{{::key}}</kbd>
+          </li>
+        </ul>
+
+    </div>
+
+    <div class="btns btn-group col-md-3">
+      <a class="btn btn-xs btn-link inputbtn" ng-click="main.state = main.state !== 1 ? 1 : 0" title="words">
+        <i class="glyphicon glyphicon-th"></i>
+      </a>
+      <a class="btn btn-xs btn-link inputbtn" ng-show="main.starred.length > 0 || main.state == 3" ng-click="main.state = main.state !== 3 ? 3 : 0" title="saved inputs">
+        <i class="glyphicon glyphicon-paperclip"></i>
+      </a>
+    </div>
+    <div class="btns btn-group col-md-3 pull-right text-right">
+      <a class="btn btn-xs btn-link inputbtn" ng-click="main.state = main.state !== 2 ? 2 : 0" title="tests">
+        <i class="glyphicon glyphicon-ok-sign"></i>
+      </a>
+      <a class="btn btn-xs btn-link inputbtn" ng-click="main.state = main.state !== 4 ? 4 : 0" title="help">
+        <i class="glyphicon glyphicon-question-sign"></i>
+      </a>
+    </div>
+
+  </div>
+
+</form>
