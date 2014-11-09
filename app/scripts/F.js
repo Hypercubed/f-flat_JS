@@ -5,6 +5,13 @@
 
   var global = this;
 
+  var is = {
+    Array: Array.isArray,
+    Boolean: function(value) {
+      return typeof value === 'boolean';
+    }
+  }
+
   function eql(a,b) {
     if (a == b) {return true;}
     if (a === null || b === null) {return false;}
@@ -42,23 +49,23 @@
   }
 
   function erf(x) {
-  	if(x<4.58918682993e-8 && x>-4.58918682993e-8)
-  		{return x*2;}
-  	// Chebyshev approx, alg by Thomas Meyer
-  	var t,z,ret;
-  	z=Math.abs(x);
-  	t=1/(1+0.5*z);
-  	ret=t*Math.exp(-z*z-1.26551223+t*
-  			( 1.00002368 + t *
-  			( 0.37409196 + t *
-  			( 0.09678418 + t *
-  			( -0.18628806 + t *
-  			( 0.27886807 + t *
-  			( -1.13520398 + t *
-  			( 1.48851587 + t *
-  			( -0.82215223 + t *
-  				0.1708727 ) ) ) ) ) ) ) ) );
-  	return x<0?ret-1:1-ret;
+    if(x<4.58918682993e-8 && x>-4.58918682993e-8)
+      {return x*2;}
+      // Chebyshev approx, alg by Thomas Meyer
+    var t,z,ret;
+    z=Math.abs(x);
+    t=1/(1+0.5*z);
+    ret=t*Math.exp(-z*z-1.26551223+t*
+      ( 1.00002368 + t *
+      ( 0.37409196 + t *
+      ( 0.09678418 + t *
+      ( -0.18628806 + t *
+      ( 0.27886807 + t *
+      ( -1.13520398 + t *
+      ( 1.48851587 + t *
+      ( -0.82215223 + t *
+      	0.1708727 ) ) ) ) ) ) ) ) );
+    return x<0?ret-1:1-ret;
   }
 
   function pluck(context, path) {
@@ -94,31 +101,31 @@
 
     this.define({
       '+': function(lhs,rhs) {
-            if (rhs instanceof Array && lhs instanceof Array) {  //concat
+            if (is.Array(lhs) && is.Array(rhs)) {  //concat
               return lhs.concat(rhs);
             }
-            if (typeof rhs === 'boolean' && typeof lhs === 'boolean') {  // boolean or
+            if (is.Boolean(rhs) && is.Boolean(lhs)) {  // boolean or
               return lhs || rhs;
             }
             return lhs + rhs;
           },
       '-': function(lhs,rhs) {
-            if (typeof rhs === 'boolean' && typeof lhs === 'boolean') { // boolean xor
+            if (is.Boolean(rhs) && is.Boolean(lhs)) { // boolean xor
               return ( lhs || rhs ) && !( lhs && rhs );
             }
             return lhs - rhs;
           },
       '*': function(lhs,rhs) {
-            if (typeof rhs === 'boolean' && typeof lhs === 'boolean') { // boolean and
+            if (is.Boolean(rhs) && is.Boolean(lhs)) { // boolean and
               return ( lhs && rhs );
             }
             if (typeof lhs === 'string' && typeof rhs === 'number') {
               return new Array( rhs + 1 ).join( lhs );
             }
-            if (lhs instanceof Array && typeof rhs === 'string') {  // string join
+            if (is.Array(lhs) && typeof rhs === 'string') {  // string join
               return lhs.join( rhs );
             }
-            if (lhs instanceof Array && rhs instanceof Array) {
+            if (is.Array(lhs) && is.Array(rhs)) {
               var l = [];
               for(var i = 0; i < lhs.length; i++) {
                 l.push(lhs[i]);
@@ -126,7 +133,7 @@
               }
               return l;
             }
-            if (lhs instanceof Array && typeof rhs === 'number') {
+            if (is.Array(lhs) && typeof rhs === 'number') {
               if (rhs === 0) {return [];}
               var a = [];
               var len = lhs.length*rhs;
@@ -135,15 +142,19 @@
             }
             return lhs * rhs;
           },
-        '/': function(lhs,rhs) {
-            if (typeof rhs === 'boolean' && typeof lhs === 'boolean') {  // boolean nand
-              return !( lhs && rhs );
-            }
-            if (typeof lhs === 'string' && typeof rhs === 'string') {  // string split
-              return lhs.split( rhs );
-            }
-            return lhs / rhs;
-          },
+      '/': function(lhs,rhs) {
+          if (is.Boolean(rhs) && is.Boolean(lhs)) {  // boolean nand
+            return !( lhs && rhs );
+          }
+          if (typeof lhs === 'string' && typeof rhs === 'string') {  // string split
+            return lhs.split( rhs );
+          }
+          if ((typeof lhs === 'string' || is.Array(lhs)) && typeof rhs === 'number') {  // string split
+            var len = lhs.length/rhs;
+            return lhs.slice( 0, len );
+          }
+          return lhs / rhs;
+        },
       '{': function() {
             var s = this.splice(0);
             this.q.push(s);
@@ -323,7 +334,7 @@
       return fn;
     });
     this.define('blob', function(b,t) {
-      if (!(b instanceof Array)) {
+      if (!(is.Array(b))) {
         b = [b];
       }
       this.push(new Blob([b], {type : t}));
@@ -505,7 +516,7 @@
     var stack = this;
 
     var ss = s;
-    if (ss instanceof Array) { ss = ss.slice(0); }
+    if (is.Array(ss)) { ss = ss.slice(0); }
     if (ss instanceof Command) { ss = [ ss ]; }
     if (typeof ss === 'string') { ss = this.lexer(ss); }
 

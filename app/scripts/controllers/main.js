@@ -20,7 +20,7 @@ angular.module('fApp')
     var history = [];
     var historyPointer = -1;
 
-    vm.starred = localStorageService.get('main.starred');
+    vm.starred = localStorageService.get('main.starred') || [];
     //localStorageService.bind($scope, 'main.starred');
 
     $scope.$watch('main.starred', function() {
@@ -69,7 +69,6 @@ angular.module('fApp')
     vm.keys = Object.keys(vm.rpn.dict);
 
     mocha.run(function(failures){
-      console.log('run mocha');
       $scope.$apply(function() {
         vm.state = (failures > 0) ? 2 : 0;
       });
