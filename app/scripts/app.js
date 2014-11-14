@@ -45,27 +45,17 @@ angular
       if (typeof value === 'function') {
         return value.toString();
       }
+      /* if (typeof value === 'undefined') {
+        return 'undefined';
+      }
+      if (value === NaN) {
+        return 'NaN';
+      } */
       if (value instanceof Array) {
         return '[ '+value.map(pp).join(' ')+' ]';
       }
       if (angular.isObject(value)) {
-        //console.log(d);
-
-        //if (value instanceof F.Command) {
-          return value.toString();
-        //}
-
-        /* d++;
-        var s = '{\n';
-        angular.forEach(value, function(v,k) {
-          s += '  '+k+': '+pp(v)+'\n';
-        })
-        s += '}';
-        d--; */
-
-        //return JSON.stringify(value, true);
-
-        //return s;
+        return value.toString();
       }
 
       return JSON.stringify(value);

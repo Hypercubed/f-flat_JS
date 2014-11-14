@@ -9,6 +9,9 @@
     Array: Array.isArray,
     Boolean: function(value) {
       return typeof value === 'boolean';
+    },
+    String: function(value) {
+      return typeof value === 'string';
     }
   }
 
@@ -97,9 +100,9 @@
   function F(s) {
     this.depth = 0;
     this.q = [];
-    this.dict = {};
 
-    this.define({
+    /* core */
+    this.dict = {
       '+': function(lhs,rhs) {
             if (is.Array(lhs) && is.Array(rhs)) {  //concat
               return lhs.concat(rhs);
@@ -120,6 +123,7 @@
               return ( lhs && rhs );
             }
             if (typeof lhs === 'string' && typeof rhs === 'number') {
+              rhs = rhs|0;
               return new Array( rhs + 1 ).join( lhs );
             }
             if (is.Array(lhs) && typeof rhs === 'string') {  // string join
@@ -134,6 +138,7 @@
               return l;
             }
             if (is.Array(lhs) && typeof rhs === 'number') {
+              rhs = rhs|0;
               if (rhs === 0) {return [];}
               var a = [];
               var len = lhs.length*rhs;
@@ -150,6 +155,7 @@
             return lhs.split( rhs );
           }
           if ((typeof lhs === 'string' || is.Array(lhs)) && typeof rhs === 'number') {  // string split
+            rhs = rhs|0;
             var len = lhs.length/rhs;
             return lhs.slice( 0, len );
           }
@@ -197,8 +203,9 @@
         return lhs;
       },
 
-    });
+    };
 
+    /* additioan ops */
     this
       //.define('/', function(lhs,rhs) { return lhs / rhs; })
       .define('%', function(lhs,rhs) { return lhs % rhs; })
@@ -206,6 +213,7 @@
       .define('<', function(lhs,rhs) { return lhs < rhs; })
       .define('=', eql);
 
+    /* stack */
     this
       .define('depth',   function () { return this.length; })
       .define('stack',   function () { return this.splice(0); })
@@ -221,6 +229,7 @@
         this.push(s);
       });
 
+    /* stack functions */
     this
       .define('drop',   function () { this.pop(); })
       .define('swap',   function (a,b) { this.push(b); return a; })
@@ -241,13 +250,13 @@
       .define('see',    function (a) { return this.lookup(a).toString(); })
       .define('eval',   function (a) { this.eval(a); })
       .define('clr',    F.prototype.clr)
-
       .define('>r',     function (a) { this.q.push(a); })
       .define('<r',     function () { return this.q.pop(); })
       .define('choose', function (b,t,f) { return b ? t : f; });
 
+    /* math */
     this
-      .define('Math', Math)
+      //.define('Math', Math)
       .define(Math.abs)
       .define(Math.cos)
       .define(Math.sin)
@@ -262,84 +271,118 @@
       .define(Math.sqrt)
       .define(Math.max)
       .define(Math.min)
+      .define(Math.exp)
+      .define('gamma',  gamma)
+      .define('erf',    erf)
+      .define('ln',     Math.log)
       .define('^', Math.pow)
-      .define('rand', Math.random);
+      .define('rand', Math.random)
+      .define({
+        'e': Math.E,               // returns Euler's number
+        'pi': Math.PI,             // returns PI
+        'tau': 2*Math.PI,
+        'sqrt2': Math.SQRT2,       // returns the square root of 2
+        'sqrt1_2': Math.SQRT1_2,   // returns the square root of 1/2
+        'ln2': Math.LN2,           // returns the natural logarithm of 2
+        'ln10': Math.LN10,         // returns the natural logarithm of 10
+        'log2e': Math.LOG2E,       // returns base 2 logarithm of E
+        'log10e': Math.LOG10E      // returns base 10 logarithm of E
+      });
 
-    this.define({
-      'e': Math.E,               // returns Euler's number
-      'pi': Math.PI,             // returns PI
-      'tau': 2*Math.PI,
-      'sqrt2': Math.SQRT2,       // returns the square root of 2
-      'sqrt1_2': Math.SQRT1_2,   // returns the square root of 1/2
-      'ln2': Math.LN2,           // returns the natural logarithm of 2
-      'ln10': Math.LN10,         // returns the natural logarithm of 10
-      'log2e': Math.LOG2E,       // returns base 2 logarithm of E
-      'log10e': Math.LOG10E      // returns base 10 logarithm of E
-    });
+    /* derived math */
+    this
+      .define('log',    'ln ln10 /' )
+      //.define('sign', '0 < -1 1 choose')
+      .define('erfc',    '1 swap erf -')
+      .define('acosh',   'dup dup * -- sqrt + ln')
+      .define('cosh',   'exp dup inv + 2 /')
+      .define('sinh',   'exp dup inv - 2 /')
+      .define('tanh',   '2 * exp dup -- swap ++ /')
+      //.define('asinh',   'dup dup * -- sqrt + ln')
+      .define('atanh',   '1 swap dup [ + 1 ] dip - / ln 0.5 *');
 
     this.define({
       'toRadians': 'pi 180 / *',
       'toDegrees': '180 pi / *'
     });
 
+    /* conversion */
     this
       .define('String', String)
       .define('Number', Number)
-      .define('Boolean', Number);
+      .define('Boolean', Number)
+      .define('Array', function(n) { return new Array(n); })
+      .define('Integer', function(a) { return a|0; });
+      ;
 
+    /* conversion */
     this
-      .define('log',    'ln ln10 /' )
-      .define('ln',     Math.log)
-      .define('gamma',  gamma)
-      .define('erf',    erf)
-      .define('erfc',    '1 swap erf -')
-      .define('null',   function() { return null; });
+      .define('isString',  'type "string" =')
+      .define('isNumber',  'type "number" =')
+      .define('isBoolean', 'type "boolean" =')
+      ;
 
+    /* other */
+    this
+      .define('null',   function() { return null; })
+      .define('nan',   function() { return NaN; });  // Doesn't work
+
+    /* strings */
+
+
+    /* lists  */
     this.define('length', function (a) { return a.length; });
     this.define('pluck', pluck);
     this.define('pop', function () { return this[this.length-1].pop(); });  // These should probabbly leave the array and the return value
     this.define('shift', function () { return this[this.length-1].shift(); });
-    this.define('slice', function (a,b,c) { return a.slice(b,c); });
+    this.define('slice', function (a,b,c) { return a.slice(b,c !== null ? c : undefined); });
     this.define('splice', function (a,b,c) { return a.splice(b,c); });
     //this.define('split', function (a,b) { return a.split(b); });
     this.define('at', function (a,b) {
-      if (typeof a === 'string') {
-        a = a.split('');
-      }
-      return a.splice(b,1);
+      b = b|0;
+      if (b < 0) b = a.length+b;
+      console.log(b, a[b]);
+      return (is.String(s)) ? a.charAt(b) : a[b];
     });
+    this.define('indexof', function (a,b) {
+      return a.indexOf(b);
+    });
+
+    /* experimental */
     this.define('throw',  F.prototype.throw);
 
     this.define('clock', function clock() { return (new Date()).getTime(); });
 
-    // experimental
-    this.define('print', function (a) { console.log(a); });
+    this.define('print', function print(a) { console.log(a); });
     this.define('?', function (a) { console.info(a); });
-    this.define('alert', function (a) { window.alert(a); });
+    this.define('alert', function alert(a) { window.alert(a); });
     this.define('$global', global);
-    this.define('$', function (a) { return global.$(a); });
-    this.define('JSON.stringify', function (a) { return JSON.stringify(a); });
-    this.define('JSON.parse', function (a) { return JSON.parse(a); });
-    this.define('call', function (a,b) { return a.call(this,b); });
-    this.define('apply', function (a,b) { return a.apply(this,b); });
-    this.define('$timeout', function (a,b) {
+    this.define('$', function $(a) { return global.$(a); });
+    this.define('JSON.stringify', function JSONstringify(a) { return JSON.stringify(a); });
+    this.define('JSON.parse', function JSONparse(a) { return JSON.parse(a); });
+    this.define('call', function call(a,b) { return a.call(this,b); });
+    this.define('apply', function apply(a,b) { return a.apply(this,b); });
+    this.define('$timeout', function $timeout(a,b) {
       var self = this;
       setTimeout(function() {
         self.eval(a);
       },b);
     });
-    this.define('jsDef', '#jsFunc dip def');
-    this.define('jsFunc', function(rhs) {
+
+    this.define('jsFunc', function jsFunc(rhs) {
       eval.call(this,'var fn = '+rhs);
       return fn;
     });
-    this.define('blob', function(b,t) {
+    this.define('jsDef', '#jsFunc dip def');
+
+    this.define(function blob(b,t) {
       if (!(is.Array(b))) {
         b = [b];
       }
       this.push(new Blob([b], {type : t}));
     });
-    this.define('httpGet', function(url) {
+
+    this.define(function httpGet(url) {
       var stack = this;
       var xhr = new XMLHttpRequest();
       xhr.onload = function () {
@@ -358,6 +401,27 @@
       xhr.send(null);
     });
 
+    this.define(function bench(a) {
+      var i;
+      var N = 1000;
+
+      i = N;
+      var t0 = (new Date()).getTime();
+      while (i--) {
+        new F([]);
+      }
+
+      i = 1000;
+      var t1 = (new Date()).getTime();
+      while (i--) {
+        new F(a);
+      }
+
+      return (new Date()).getTime() - 2*t1 + t0;
+
+    });
+
+    /* user */
     this.define({
       'slip':   '>r eval <r',
       'dip':    'swap slip',
@@ -368,11 +432,15 @@
       'over':   'dupd swap',
       '--':     '1 -',
       '++':     '1 +',
+      'neg':    '0 swap -',
       'pred':   'dup --',
       'succ':   'dup ++',
       'times':  '* eval',
       'upto':   'over - [ succ ] swap times',
       'count':  '1 swap upto',
+      '~!':     '++ gamma',
+      'c!':     'pred [ count ] dip [ * ] swap times',
+      'r!':     'dup 0 = [ drop 1 ] [ pred r! * ] branch',
       '!':      'dup 25 < [ pred [ count ] dip [ * ] swap times ] [ ++ gamma ] branch',
       'npr':    '[ [ ! ] keep ] dip - ! /',
       'ncr':    '[ npr ] keep ! / round',
@@ -387,8 +455,16 @@
       'sum':    '0 [ + ] reduce',
       'map':    '* in',
       'product': '1 [ * ] reduce',
-      'first':  'pop dropd',
-      'last':   'shift dropd',
+      'first':  '0 at',
+      'last':   '-1 at',
+      'inv':    '1 swap /',
+      '_timefn': 'clock swap [ dup in drop ] 1000 times drop clock -',
+      'timefn': '_timefn [ ] _timefn - -1000 / inv " ops/sec" + ',
+      'head': '0 swap slice',
+      'tail': 'neg null slice',
+      'startswith': 'dup length [ head ] >> dip =',  // TODO: should support regex?
+      'endswith': 'dup length [ tail ] >> dip =',
+      'contains': 'indexof 1 >'
     });
 
     if (s) { this.eval(s); }
@@ -535,7 +611,8 @@
           } else if (d instanceof Function) {
             var args = d.length > 0 ? stack.splice(-d.length) : [];
             var r = d.apply(stack, args);
-            if (r !== undefined) {
+            //console.log(r);
+            if (typeof r !== 'undefined') {
               stack.push(r);
             }
           } else if (d) {
